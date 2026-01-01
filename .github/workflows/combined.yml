@@ -1,0 +1,98 @@
+name: Combined Tests
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # Run every 10 minutes for test_b
+    - cron: '*/30 * * * *'  # Run every 30 minutes for test
+  workflow_dispatch:
+
+jobs:
+  test_b:
+    if: github.event.schedule == '*/10 * * * *'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create Files from Secrets
+        env:
+          B_LIST: ${{ secrets.B_LIST }}
+          B_REQ: ${{ secrets.B_REQ }}
+          B_TEST: ${{ secrets.B_TEST }}
+        run: |
+          echo "$B_LIST" > a.txt
+          echo "$B_REQ" > req.txt
+          echo "$B_TEST" > test.py
+
+      - name: Install Dependencies
+        run: |
+          if [ -f req.txt ]; then pip install -r req.txt; fi
+
+      - name: Run
+        run: |
+          python test.py > /dev/null 2>&1
+
+      - name: Commit and Push State
+        env:
+          GITHUB_TOKEN: ${{ secrets.UPDATE_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -f data2 ]; then
+            git add data2
+            git commit -m "Update state" || echo "No changes to commit"
+            git push
+          fi
+
+  test:
+    if: github.event.schedule == '*/30 * * * *'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create Files from Secrets
+        env:
+          A_LIST: ${{ secrets.A_LIST }}
+          A_REQ: ${{ secrets.A_REQ }}
+          A_TEST: ${{ secrets.A_TEST }}
+        run: |
+          echo "$A_LIST" > a.txt
+          echo "$A_REQ" > req.txt
+          echo "$A_TEST" > test.py
+
+      - name: Install Dependencies
+        run: |
+          if [ -f req.txt ]; then pip install -r req.txt; fi
+
+      - name: Run
+        run: |
+          python test.py > /dev/null 2>&1
+
+      - name: Commit and Push State
+        env:
+          GITHUB_TOKEN: ${{ secrets.UPDATE_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -f data ]; then
+            git add data
+            git commit -m "Update" || echo "No changes to commit"
+            git push
+          fi
