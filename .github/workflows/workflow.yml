@@ -1,0 +1,51 @@
+name: Test
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'  # Run every 30 minutes
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create Files from Secrets
+        env:
+          A_LIST: ${{ secrets.A_LIST }}
+          A_REQ: ${{ secrets.A_REQ }}
+          A_TEST: ${{ secrets.A_TEST }}
+        run: |
+          echo "$A_LIST" > a.txt
+          echo "$A_REQ" > req.txt
+          echo "$A_TEST" > test.py
+
+      - name: Install Dependencies
+        run: |
+          if [ -f req.txt ]; then pip install -r req.txt; fi
+
+      - name: Run
+        run: |
+          python test.py > /dev/null 2>&1
+
+      - name: Commit and Push State
+        env:
+          GITHUB_TOKEN: ${{ secrets.UPDATE_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -f data ]; then
+            git add data
+            git commit -m "Update" || echo "No changes to commit"
+            git push
+          fi
