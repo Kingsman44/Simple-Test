@@ -8,7 +8,7 @@ on:
 
 jobs:
   test_b:
-    if: github.event.schedule == '*/10 * * * *'
+    if: github.event.schedule == '*/15 * * * *'
     runs-on: ubuntu-latest
     permissions:
       contents: write
