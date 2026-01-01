@@ -2,7 +2,7 @@ name: Test B
 
 on:
   schedule:
-    - cron: '*/20 * * * *'  # Run every 20 minutes
+    - cron: '*/10 * * * *' 
   workflow_dispatch:
 
 jobs:
