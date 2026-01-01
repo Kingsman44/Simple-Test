@@ -2,7 +2,7 @@ name: Combined Tests
 
 on:
   schedule:
-    - cron: '*/10 * * * *'  # Run every 10 minutes for test_b
+    - cron: '*/15 * * * *'  # Run every 10 minutes for test_b
     - cron: '*/30 * * * *'  # Run every 30 minutes for test
   workflow_dispatch:
 
