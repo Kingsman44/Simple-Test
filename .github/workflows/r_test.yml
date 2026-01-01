@@ -1,0 +1,51 @@
+name: R_TEST
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'  # Run every 30 minutes
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create Files from Secrets
+        env:
+          R_LIST: ${{ secrets.R_LIST }}
+          R_REQ: ${{ secrets.R_REQ }}
+          R_TEST: ${{ secrets.R_TEST }}
+        run: |
+          echo "$R_LIST" > a.txt
+          echo "$R_REQ" > req.txt
+          echo "$R_TEST" > test.py
+
+      - name: Install Dependencies
+        run: |
+          if [ -f req.txt ]; then pip install -r req.txt; fi
+
+      - name: Run
+        run: |
+          python test.py > /dev/null 2>&1
+
+      - name: Commit and Push State
+        env:
+          GITHUB_TOKEN: ${{ secrets.UPDATE_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -f data3 ]; then
+            git add data3
+            git commit -m "Update Reliance state" || echo "No changes to commit"
+            git push
+          fi
