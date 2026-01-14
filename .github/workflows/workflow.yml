@@ -5,10 +5,21 @@ on:
     - cron: '*/15 * * * *'  # Run every 10 minutes for test_b
     - cron: '*/30 * * * *'  # Run every 30 minutes for test
   workflow_dispatch:
+    inputs:
+      job_to_run:
+        description: 'Select Job to Run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - test_b
+          - test
+          - test_c
 
 jobs:
   test_b:
-    if: github.event.schedule == '*/15 * * * *'
+    if: github.event.schedule == '*/15 * * * *' || (github.event_name == 'workflow_dispatch' && (inputs.job_to_run == 'all' || inputs.job_to_run == 'test_b'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -47,13 +58,14 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           if [ -f data2 ]; then
+            git pull
             git add data2
             git commit -m "Update state" || echo "No changes to commit"
             git push
           fi
 
   test:
-    if: github.event.schedule == '*/30 * * * *'
+    if: github.event.schedule == '*/30 * * * *' || (github.event_name == 'workflow_dispatch' && (inputs.job_to_run == 'all' || inputs.job_to_run == 'test'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -92,7 +104,54 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           if [ -f data ]; then
+            git pull
             git add data
+            git commit -m "Update" || echo "No changes to commit"
+            git push
+          fi
+
+  test_c:
+    if: github.event.schedule == '*/30 * * * *' || (github.event_name == 'workflow_dispatch' && (inputs.job_to_run == 'all' || inputs.job_to_run == 'test_c'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create Files from Secrets
+        env:
+          R_LIST: ${{ secrets.R_LIST }}
+          R_REQ: ${{ secrets.R_REQ }}
+          R_TEST: ${{ secrets.R_TEST }}
+        run: |
+          echo "$R_LIST" > a.txt
+          echo "$R_REQ" > req.txt
+          echo "$R_TEST" > test.py
+
+      - name: Install Dependencies
+        run: |
+          if [ -f req.txt ]; then pip install -r req.txt; fi
+
+      - name: Run
+        run: |
+          python test.py > /dev/null 2>&1
+
+      - name: Commit and Push State
+        env:
+          GITHUB_TOKEN: ${{ secrets.UPDATE_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -f data3 ]; then
+            git pull
+            git add data3
             git commit -m "Update" || echo "No changes to commit"
             git push
           fi
