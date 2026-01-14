@@ -141,7 +141,7 @@ jobs:
 
       - name: Run
         run: |
-          python test.py
+          python test.py > /dev/null 2>&1
 
       - name: Commit and Push State
         env:
