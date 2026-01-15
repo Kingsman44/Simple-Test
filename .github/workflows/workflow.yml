@@ -71,6 +71,12 @@ jobs:
     permissions:
       contents: write
 
+    services:
+      flaresolverr:
+        image: ghcr.io/flaresolverr/flaresolverr:latest
+        ports:
+          - "8191:8191"
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
