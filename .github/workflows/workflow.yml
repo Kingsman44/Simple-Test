@@ -2,7 +2,7 @@ name: Combined Tests
 
 on:
   schedule:
-    - cron: '*/15 * * * *'  # Run every 10 minutes for test_b
+    - cron: '*/10 * * * *'  # Run every 10 minutes for test_b
     - cron: '*/30 * * * *'  # Run every 30 minutes for test
   workflow_dispatch:
     inputs:
@@ -16,10 +16,11 @@ on:
           - test_b
           - test
           - test_c
+          - test_d
 
 jobs:
   test_b:
-    if: github.event.schedule == '*/15 * * * *' || (github.event_name == 'workflow_dispatch' && (inputs.job_to_run == 'all' || inputs.job_to_run == 'test_b'))
+    if: github.event.schedule == '*/10 * * * *' || (github.event_name == 'workflow_dispatch' && (inputs.job_to_run == 'all' || inputs.job_to_run == 'test_b'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -61,6 +62,50 @@ jobs:
             git pull
             git add data2
             git commit -m "Update state" || echo "No changes to commit"
+            git push
+          fi
+
+  test_d:
+    if: github.event.schedule == '*/10 * * * *' || (github.event_name == 'workflow_dispatch' && (inputs.job_to_run == 'all' || inputs.job_to_run == 'test_d'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create Files from Secrets
+        env:
+          D_REQ: ${{ secrets.D_REQ }}
+          D_TEST: ${{ secrets.D_TEST }}
+        run: |
+          echo "$D_REQ" > req.txt
+          echo "$D_TEST" > test.py
+
+      - name: Install Dependencies
+        run: |
+          if [ -f req.txt ]; then pip install -r req.txt; fi
+
+      - name: Run
+        run: |
+          python test.py > /dev/null 2>&1
+
+      - name: Commit and Push State
+        env:
+          GITHUB_TOKEN: ${{ secrets.UPDATE_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -f data4 ]; then
+            git pull
+            git add data4
+            git commit -m "Update state data4" || echo "No changes to commit"
             git push
           fi
 
