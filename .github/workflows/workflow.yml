@@ -17,6 +17,7 @@ on:
           - test
           - test_c
           - test_d
+          - test_s
 
 jobs:
   test_b:
@@ -115,6 +116,37 @@ jobs:
             git push
           fi
 
+  test_s:
+    if: github.event.schedule == '*/10 * * * *' || (github.event_name == 'workflow_dispatch' && (inputs.job_to_run == 'all' || inputs.job_to_run == 'test_s'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create Files from Secrets
+        env:
+          S_REQ: ${{ secrets.S_REQ }}
+          S_TEST: ${{ secrets.S_TEST }}
+        run: |
+          echo "$S_REQ" > req.txt
+          echo "$S_TEST" > test.py
+
+      - name: Install Dependencies
+        run: |
+          if [ -f req.txt ]; then pip install -r req.txt; fi
+
+      - name: Run
+        run: |
+          python test.py
+
   test:
     if: github.event.schedule == '*/30 * * * *' || (github.event_name == 'workflow_dispatch' && (inputs.job_to_run == 'all' || inputs.job_to_run == 'test'))
     runs-on: ubuntu-latest
@@ -192,7 +224,7 @@ jobs:
 
       - name: Run
         run: |
-          python test.py > /dev/null 2>&1
+          python test.py
 
       - name: Commit and Push State
         env:
