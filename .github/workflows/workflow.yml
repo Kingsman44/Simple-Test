@@ -3,7 +3,8 @@ name: Combined Tests
 on:
   schedule:
     - cron: '*/10 * * * *'  # Run every 10 minutes for test_b
-    - cron: '*/30 * * * *'  # Run every 30 minutes for test
+    - cron: '*/15 * * * *'  # Run every 10 minutes for test_d
+    - cron: '*/30 * * * *'  # Run every 30 minutes for test and test_c
   workflow_dispatch:
     inputs:
       job_to_run:
@@ -117,7 +118,7 @@ jobs:
           fi
 
   test_s:
-    if: github.event.schedule == '*/10 * * * *' || (github.event_name == 'workflow_dispatch' && (inputs.job_to_run == 'all' || inputs.job_to_run == 'test_s'))
+    if: github.event.schedule == '*/15 * * * *' || (github.event_name == 'workflow_dispatch' && (inputs.job_to_run == 'all' || inputs.job_to_run == 'test_s'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
