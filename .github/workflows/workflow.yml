@@ -5,6 +5,8 @@ on:
     - cron: '*/10 * * * *'  # Run every 10 minutes for test_b
     - cron: '*/15 * * * *'  # Run every 10 minutes for test_d
     - cron: '*/30 * * * *'  # Run every 30 minutes for test and test_c
+    - cron: '*/16 * * * *'  # Run every 16 minutes for test_s1
+    - cron: '*/17 * * * *'  # Run every 17 minutes for test_s2
   workflow_dispatch:
     inputs:
       job_to_run:
@@ -19,6 +21,8 @@ on:
           - test_c
           - test_d
           - test_s
+          - test_s1
+          - test_s2
 
 jobs:
   test_b:
@@ -139,6 +143,68 @@ jobs:
         run: |
           echo "$S_REQ" > req.txt
           echo "$S_TEST" > test.py
+
+      - name: Install Dependencies
+        run: |
+          if [ -f req.txt ]; then pip install -r req.txt; fi
+
+      - name: Run
+        run: |
+          python test.py
+
+  test_s1:
+    if: github.event.schedule == '*/16 * * * *' || (github.event_name == 'workflow_dispatch' && (inputs.job_to_run == 'all' || inputs.job_to_run == 'test_s1'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create Files from Secrets
+        env:
+          S_REQ: ${{ secrets.S_REQ }}
+          S1_TEST: ${{ secrets.S1_TEST }}
+        run: |
+          echo "$S_REQ" > req.txt
+          echo "$S1_TEST" > test.py
+
+      - name: Install Dependencies
+        run: |
+          if [ -f req.txt ]; then pip install -r req.txt; fi
+
+      - name: Run
+        run: |
+          python test.py
+
+  test_s2:
+    if: github.event.schedule == '*/17 * * * *' || (github.event_name == 'workflow_dispatch' && (inputs.job_to_run == 'all' || inputs.job_to_run == 'test_s2'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create Files from Secrets
+        env:
+          S_REQ: ${{ secrets.S_REQ }}
+          S2_TEST: ${{ secrets.S2_TEST }}
+        run: |
+          echo "$S_REQ" > req.txt
+          echo "$S2_TEST" > test.py
 
       - name: Install Dependencies
         run: |
